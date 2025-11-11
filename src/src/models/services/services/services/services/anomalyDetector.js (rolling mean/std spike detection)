@@ -1,0 +1,20 @@
+const Aggregate = require('../models/Aggregate');
+
+
+async function detectSpikes({ service, account, region, windowDays=14, threshold=3 }){
+// compute rolling mean & std for last windowDays before the latest date
+const last = await Aggregate.find({ service, account, region }).sort({ date: -1 }).limit(windowDays+1).lean();
+if(last.length < 2) return [];
+const latest = last[0];
+const window = last.slice(1, windowDays+1);
+const vals = window.map(d=>d.cost || 0);
+const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+const variance = vals.reduce((a,b)=>a + Math.pow(b-mean,2),0)/vals.length;
+const std = Math.sqrt(variance);
+const z = (latest.cost - mean) / (std || 1);
+if(z > threshold){
+return [{ date: latest.date, service, account, region, cost: latest.cost, z }];
+}
+return [];
+}
+module.exports = { detectSpikes };
