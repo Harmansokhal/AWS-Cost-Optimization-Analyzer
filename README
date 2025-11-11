@@ -1,0 +1,45 @@
+aws-cost-analyzer/
+├─ backend/
+│ ├─ package.json
+│ ├─ src/
+│ │ ├─ index.js # express app entry
+│ │ ├─ config.js
+│ │ ├─ auth.js # JWT middleware
+│ │ ├─ routes/
+│ │ │ ├─ ingest.js
+│ │ │ ├─ summaries.js
+│ │ │ ├─ anomalies.js
+│ │ │ └─ recs.js
+│ │ ├─ controllers/
+│ │ │ ├─ ingestController.js
+│ │ │ ├─ summaryController.js
+│ │ │ └─ recController.js
+│ │ ├─ services/
+│ │ │ ├─ csvIngestService.js
+│ │ │ ├─ normalize.js
+│ │ │ ├─ aggregator.js
+│ │ │ ├─ anomalyDetector.js
+│ │ │ └─ recommendations.js
+│ │ ├─ models/
+│ │ │ ├─ BillingLineItem.js
+│ │ │ ├─ Aggregate.js
+│ │ │ └─ JobRun.js
+│ │ └─ jobs/
+│ │ └─ nightly.js
+│ └─ Dockerfile
+├─ frontend/
+│ ├─ package.json
+│ ├─ src/
+│ │ ├─ App.jsx
+│ │ ├─ api.js
+│ │ ├─ pages/
+│ │ │ └─ Dashboard.jsx
+│ │ ├─ components/
+│ │ │ ├─ CostChart.jsx
+│ │ │ └─ DrilldownTable.jsx
+│ │ └─ utils/exportCsv.js
+│ └─ Dockerfile
+├─ docker-compose.yml
+├─ sample_data/
+│ └─ sample-billing.csv
+└─ README.md
