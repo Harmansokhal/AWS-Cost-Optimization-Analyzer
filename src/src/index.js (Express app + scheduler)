@@ -1,0 +1,52 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const morgan = require('morgan');
+const helmet = require('helmet');
+const cors = require('cors');
+const config = require('./config');
+const cron = require('node-cron');
+
+
+const ingestRoutes = require('./routes/ingest');
+const summaryRoutes = require('./routes/summaries');
+const anomaliesRoutes = require('./routes/anomalies');
+const recRoutes = require('./routes/recs');
+
+
+const nightlyJob = require('./jobs/nightly');
+
+
+async function main(){
+await mongoose.connect(config.mongoUri, {useNewUrlParser:true, useUnifiedTopology:true});
+console.log('Mongo connected');
+
+
+const app = express();
+app.use(helmet());
+app.use(cors());
+app.use(express.json({limit:'5mb'}));
+app.use(morgan('combined'));
+
+
+app.use('/api/ingest', ingestRoutes);
+app.use('/api/summaries', summaryRoutes);
+app.use('/api/anomalies', anomaliesRoutes);
+app.use('/api/recommendations', recRoutes);
+
+
+app.get('/', (req, res) => res.send('AWS Cost Analyzer API'));
+
+
+app.listen(config.port, ()=> console.log('Server started on', config.port));
+
+
+// schedule nightly run at 02:00 UTC (adjust to local timezone as needed)
+cron.schedule('0 2 * * *', async ()=>{
+console.log('Starting nightly job at', new Date());
+try { await nightlyJob(); }
+catch(e){ console.error('Nightly job failed', e); }
+});
+}
+
+
+main().catch(err=>{console.error(err); process.exit(1);});
