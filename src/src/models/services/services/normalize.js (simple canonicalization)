@@ -1,0 +1,32 @@
+const parseDate = s=> s ? new Date(s) : null;
+
+
+function normalize(row){
+// Example mapping — extend to match exact AWS CSV columns you receive
+const doc = {
+billDate: parseDate(row['BillingPeriodStartDate'] || row['usage_start_date'] || row['Bill/InvoiceDate'] || row['InvoiceID'] || row['lineItem/UsageStartDate']),
+payerAccountId: row['payer_account_id'] || row['PayerAccountId'] || row['payerAccountId'],
+linkedAccountId: row['linked_account_id'] || row['LinkedAccountId'] || row['lineItem/UsageAccountId'],
+productName: row['product_name'] || row['ProductName'] || row['product'],
+service: row['product'] || row['lineItem/ProductCode'] || row['product_name'],
+region: row['availability_zone'] || row['lineItem/ResourceLocation'] || row['aws_region'] || row['region'],
+usageType: row['lineItem/UsageType'] || row['UsageType'] || row['usage_type'],
+operation: row['lineItem/Operation'] || row['Operation'] || row['operation'],
+usageQuantity: Number(row['lineItem/UsageAmount'] || row['usage_amount'] || row['UsageQuantity'] || 0),
+cost: Number(row['lineItem/UnBlendedCost'] || row['unblended_cost'] || row['Cost'] || 0),
+currency: row['currency'] || 'USD',
+tags: {},
+raw: row
+};
+
+
+// normalize tags if present in flat columns like tag:Name or resourceTags/user:Owner
+Object.keys(row).forEach(k=>{
+if(/tag:|resourceTags/i.test(k)){
+const key = k.replace(/(tag:|resourceTags.|resourceTags\[|\]|\(|\))/ig,'').trim();
+doc.tags[key] = row[k];
+}
+});
+return doc;
+}
+module.exports = normalize;
