@@ -1,0 +1,36 @@
+const BillingLineItem = require('../models/BillingLineItem');
+const Aggregate = require('../models/Aggregate');
+
+
+async function computeDailyAggregates(date){
+// date: Date object for the day
+const start = new Date(date); start.setUTCHours(0,0,0,0);
+const end = new Date(start); end.setUTCDate(end.getUTCDate()+1);
+
+
+const pipeline = [
+{ $match: { billDate: { $gte: start, $lt: end } } },
+{ $group: {
+_id: { service: '$service', account: '$linkedAccountId', region: '$region' },
+cost: { $sum: '$cost' },
+usage: { $sum: '$usageQuantity' },
+count: { $sum: 1 }
+}},
+{ $project: { service: '$_id.service', account: '$_id.account', region: '$_id.region', cost:1, usage:1, count:1, date: start } }
+];
+
+
+const rows = await BillingLineItem.aggregate(pipeline).allowDiskUse(true);
+// upsert into Aggregate collection
+const ops = rows.map(r=>({
+updateOne: {
+filter: { date: r.date, service: r.service, account: r.account, region: r.region },
+update: { $set: { cost: r.cost, usage: r.usage, count: r.count } },
+upsert: true
+}
+}));
+if(ops.length) await Aggregate.bulkWrite(ops);
+}
+
+
+module.exports = { computeDailyAggregates };
