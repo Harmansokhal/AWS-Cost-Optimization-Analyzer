@@ -1,0 +1,6 @@
+const BillingLineItem = require('../models/BillingLineItem');
+
+
+async function findIdleVolumes(daysIdle=30){
+// simplistic: find EBS volumes with usage quantity ~0 for last N days
+// real sol
